@@ -15,7 +15,7 @@ from kiro_loop_engine.models import InstructionBlock, ResultBlock
 
 
 # Recognized metadata keys in instruction blocks
-_METADATA_KEYS = {"type", "status", "priority", "safety"}
+_METADATA_KEYS = {"type", "status", "priority", "safety", "max-retries", "verify", "accept"}
 
 # Pattern to match file paths in content
 _FILE_PATH_PATTERN = re.compile(
@@ -111,6 +111,15 @@ class Parser:
         status = metadata.get("status", "pending")
         priority = metadata.get("priority", "normal")
         safety = metadata.get("safety", "")
+        max_retries_str = metadata.get("max-retries", "3")
+        verify = metadata.get("verify", "")
+        accept = metadata.get("accept", "")
+
+        # Parse max-retries safely
+        try:
+            max_retries = int(max_retries_str)
+        except (ValueError, TypeError):
+            max_retries = 3
 
         block_id = self._generate_id(title, start)
 
@@ -126,6 +135,9 @@ class Parser:
             raw_start_line=start,
             raw_end_line=end,
             result_block=result_block,
+            max_retries=max_retries,
+            verify=verify,
+            acceptance_criteria=accept,
         )
 
     def _is_metadata_line(self, line: str) -> bool:

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+dist/
+*.egg-info/
+.kiro/loop/memory.json
+.kiro/loop/trace.log
+.kiro/loop/rollback/

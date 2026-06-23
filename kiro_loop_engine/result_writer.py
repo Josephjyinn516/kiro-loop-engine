@@ -89,8 +89,13 @@ class ResultWriter:
             "",
             f"timestamp: {result.timestamp}",
             f"status: {result.status}",
+            f"attempt: {result.attempt}",
+            f"verified: {result.verified}",
             f"summary: {summary}{'[truncated]' if summary_truncated else ''}",
         ]
+
+        if result.verification_output:
+            lines.append(f"verification: {result.verification_output[:200]}")
 
         if output:
             if "\n" in output or output_truncated:

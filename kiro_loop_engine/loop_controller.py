@@ -1,7 +1,14 @@
 """Loop Controller for the Kiro Loop Engine.
 
-Orchestrates the parse-execute-write cycle triggered by file change
-events from the Kiro fileEdited hook.
+Implements the full Loop Engineering architecture:
+- Layer ①: Agent Loop (parse → execute → write results)
+- Layer ②: Verification Loop (integrated via ExecutionEngine)
+- Layer ③: Event-driven Loop (fileEdited hook triggers, change coalescing)
+- Layer ④: Hill-climbing Loop (tracing, memory across cycles)
+
+Minimum closed loop (最小闭环):
+    观察状态 → 判断下一步 → 调用工具 → 接收结果 → 验证完成 → 继续/停止
+    Observe  → Decide     → Execute  → Receive  → Verify   → Continue/Stop
 """
 
 from __future__ import annotations
@@ -16,16 +23,23 @@ from kiro_loop_engine.execution_engine import ExecutionEngine
 from kiro_loop_engine.models import InstructionBlock, ResultBlock
 from kiro_loop_engine.parser import Parser
 from kiro_loop_engine.result_writer import ResultWriter
+from kiro_loop_engine.tracer import Tracer
 
 logger = logging.getLogger(__name__)
 
 
 class LoopController:
-    """Orchestrates the parse-execute-write cycle.
+    """Orchestrates the full Loop Engineering cycle.
 
-    Triggered by Kiro's fileEdited hook when the control file is saved.
-    Reads the file, parses instruction blocks, processes pending blocks
-    in document order, and writes results back.
+    Triggered by Kiro's fileEdited hook (Layer ③: Event-driven Loop).
+    Implements the minimum closed loop from the architecture diagram:
+
+    1. OBSERVE: Read control file, parse instruction blocks
+    2. DECIDE: Select next pending block by document order + priority
+    3. EXECUTE: Dispatch to handler via ExecutionEngine (with retry/verify)
+    4. RECEIVE: Get ResultBlock back
+    5. VERIFY: Result verified by VerificationLoop (in ExecutionEngine)
+    6. CONTINUE/STOP: Process next block or end cycle
     """
 
     def __init__(
@@ -34,6 +48,7 @@ class LoopController:
         parser: Parser | None = None,
         execution_engine: ExecutionEngine | None = None,
         result_writer: ResultWriter | None = None,
+        tracer: Tracer | None = None,
     ) -> None:
         self.control_file_path: str = control_file_path
         self.change_queue: list[float] = []
@@ -44,9 +59,19 @@ class LoopController:
         self._parser: Parser = parser or Parser()
         self._execution_engine: ExecutionEngine | None = execution_engine
         self._result_writer: ResultWriter = result_writer or ResultWriter()
+        self._tracer: Tracer | None = tracer
+
+    @property
+    def tracer(self) -> Tracer | None:
+        """Access the tracer (Layer ④: Hill-climbing memory)."""
+        return self._tracer or (self._execution_engine.tracer if self._execution_engine else None)
 
     def on_file_changed(self) -> None:
-        """Hook callback. Queues the change event and triggers processing if idle."""
+        """Hook callback (Layer ③: Event-driven Loop).
+
+        Queues the change event and triggers processing if idle.
+        Implements change coalescing to prevent duplicate cycles.
+        """
         now = time.time()
         self.change_queue.append(now)
 
@@ -72,9 +97,18 @@ class LoopController:
         self.process_cycle()
 
     def process_cycle(self) -> None:
-        """Read, parse, execute pending blocks in document order, write results."""
+        """Execute one full processing cycle (Layer ①: Agent Loop).
+
+        Implements the minimum closed loop:
+        Observe → Decide → Execute → Receive → Verify → Continue/Stop
+        """
         self.is_processing = True
         self.change_queue.clear()
+
+        # Record cycle start in tracer (Layer ④)
+        tracer = self.tracer
+        if tracer:
+            tracer.start_cycle()
 
         try:
             self._run_cycle()
@@ -84,17 +118,20 @@ class LoopController:
         finally:
             self.is_processing = False
 
+        # Check for queued changes during processing (Layer ③: re-trigger)
         if self.change_queue:
             logger.info("Processing queued changes detected during previous cycle.")
             if not self._coalesce_changes():
                 self.process_cycle()
 
     def _run_cycle(self) -> None:
+        """Core cycle implementation with full loop architecture."""
         control_path = Path(self.control_file_path)
         if not control_path.exists():
             self._paused = True
             return
 
+        # === OBSERVE: Read and parse control file ===
         file_content = control_path.read_text(encoding="utf-8")
         blocks = self._parser.parse(file_content)
 
@@ -104,6 +141,7 @@ class LoopController:
         processed_titles: set[str] = set()
 
         while True:
+            # === DECIDE: Select next actionable block ===
             target_block: InstructionBlock | None = None
             unrecognized_block: InstructionBlock | None = None
 
@@ -113,13 +151,19 @@ class LoopController:
                 if block.status == "pending":
                     target_block = block
                     break
+                elif block.status == "retrying":
+                    # Re-process blocks that are in retry state
+                    target_block = block
+                    break
                 elif block.status not in VALID_STATUSES:
                     unrecognized_block = block
                     break
 
+            # === STOP CONDITION: No more actionable blocks ===
             if target_block is None and unrecognized_block is None:
                 break
 
+            # === EXECUTE + RECEIVE + VERIFY ===
             if target_block is not None:
                 processed_titles.add(target_block.title)
                 file_content = self._process_block(target_block, file_content)
@@ -127,11 +171,16 @@ class LoopController:
                 processed_titles.add(unrecognized_block.title)
                 file_content = self._handle_unrecognized_status(unrecognized_block, file_content)
 
+            # === CONTINUE: Re-parse and loop ===
             blocks = self._parser.parse(file_content)
 
     def _process_block(self, block: InstructionBlock, file_content: str) -> str:
-        validation_errors = self._parser.validate_block(block)
+        """Process a single block through the full loop.
 
+        Execute → Receive → Verify (handled by ExecutionEngine)
+        """
+        # Validate block structure first
+        validation_errors = self._parser.validate_block(block)
         if validation_errors:
             result = self._make_validation_error_result(block, validation_errors)
             file_content = self._write_result(file_content, block, result)
@@ -148,6 +197,7 @@ class LoopController:
             file_content = self._write_result(file_content, block, result)
             return file_content
 
+        # === EXECUTE (with integrated verify + retry from ExecutionEngine) ===
         if self._execution_engine is None:
             result = ResultBlock(
                 timestamp=self._now_timestamp(),
@@ -168,6 +218,7 @@ class LoopController:
                     truncated=len(str(exc)) > 2000,
                 )
 
+        # === WRITE RESULT (feedback to control file) ===
         file_content = self._write_result(file_content, block, result)
         return file_content
 

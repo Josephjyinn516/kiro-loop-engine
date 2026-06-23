@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kiro-loop-engine"
-version = "1.0.0"
+version = "2.0.0"
 description = "Reusable loop engineering plugin for Kiro IDE - file-driven parse-execute-write automation"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -41,7 +41,7 @@ fabric = [
 kiro-loop = "kiro_loop_engine.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/kiro_loop_engine"]
+packages = ["kiro_loop_engine"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
