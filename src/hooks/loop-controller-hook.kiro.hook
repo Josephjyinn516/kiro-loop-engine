@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Loop Controller",
+  "description": "Watches the loop engineering control file (.kiro/loop/control.md) for edits and triggers the parse-execute-write cycle. Signals completion within 300 seconds.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      ".kiro/loop/control.md"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "The loop engineering control file has been edited. Execute the loop engine cycle by running: from loop_engine.main import on_file_changed; on_file_changed(). Process all pending instruction blocks in document order and write results back to the control file. Ensure completion within 300 seconds."
+  }
+}

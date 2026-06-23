@@ -1,0 +1,14 @@
+{
+  "enabled": true,
+  "name": "Stop on Shell Error",
+  "description": "After any shell command executes, checks the output for error patterns (syntax errors, command not found, exit codes). If errors are detected, instructs the agent to STOP execution immediately and report the error to the user instead of continuing silently.",
+  "version": "1.0.0",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": ["shell"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "CRITICAL: Review the shell command output above. If the output contains ANY of these error indicators: 'syntax error', 'command not found', 'error', 'failed', 'not recognized', 'cannot be loaded', 'exception', non-zero exit code, or stack traces — you MUST:\n1. STOP all further task execution immediately. Do NOT proceed to the next task or command.\n2. Report the exact error to the user clearly and concisely.\n3. Explain what went wrong (e.g., wrong shell syntax, missing dependency, wrong path).\n4. Suggest a fix.\n\nDo NOT silently continue. Do NOT retry without user confirmation. The user must be informed of every failure."
+  }
+}
