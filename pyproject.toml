@@ -13,6 +13,12 @@ authors = [
     { name = "CRM Data Agent Team" },
 ]
 keywords = ["kiro", "loop-engine", "automation", "ide-plugin"]
+
+[project.urls]
+Homepage = "https://github.com/YOUR_USERNAME/kiro-loop-engine"
+Repository = "https://github.com/YOUR_USERNAME/kiro-loop-engine"
+Issues = "https://github.com/YOUR_USERNAME/kiro-loop-engine/issues"
+
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

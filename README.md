@@ -7,12 +7,26 @@ A reusable, pip-installable plugin that provides file-driven automation for any 
 ### Install
 
 ```bash
-# From the package directory (editable/development mode)
-pip install -e ./kiro-loop-engine
+# Install from GitHub
+pip install git+https://github.com/YOUR_USERNAME/kiro-loop-engine.git
 
-# Or build and install from wheel
-cd kiro-loop-engine
-pip install .
+# Or pin to a specific version
+pip install git+https://github.com/YOUR_USERNAME/kiro-loop-engine.git@v1.0.0
+
+# For local development (editable mode)
+pip install -e ./kiro-loop-engine
+```
+
+Add to your project's `requirements.txt`:
+```
+kiro-loop-engine @ git+https://github.com/YOUR_USERNAME/kiro-loop-engine.git@v1.0.0
+```
+
+Or in `pyproject.toml`:
+```toml
+dependencies = [
+    "kiro-loop-engine @ git+https://github.com/YOUR_USERNAME/kiro-loop-engine.git@v1.0.0",
+]
 ```
 
 ### Initialize in a New Project
