@@ -1,0 +1,13 @@
+{
+  "name": "Post-Save — Engine Verification Loop",
+  "version": "2.2.0",
+  "description": "After any file write, trigger the engine's verification loop. Explicitly calls python so it works regardless of shell type (bash/cmd/powershell).",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": ["write"]
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "python -c \"from kiro_loop_engine import LoopEngine; e = LoopEngine(); e.process_cycle(); print('ENGINE CYCLE OK')\""
+  }
+}

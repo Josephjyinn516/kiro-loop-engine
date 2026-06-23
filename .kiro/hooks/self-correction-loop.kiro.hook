@@ -1,0 +1,13 @@
+{
+  "name": "Self-Correction — Engine Retry Protocol",
+  "version": "2.0.0",
+  "description": "After a shell command runs, check if it was an engine cycle that reported failures. If so, instruct the agent to implement the fix and re-feed the engine rather than bypassing it.",
+  "when": {
+    "type": "postToolUse",
+    "toolTypes": ["shell"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "SELF-CORRECTION via LOOP ENGINE: Review the shell output above.\n\nIf the output shows the engine reported a FAILED or ESCALATED block:\n1. Run: python -c \"from kiro_loop_engine import LoopEngine; e = LoopEngine(); traces = e.get_trace(); [print(f'{t.action} | {t.status} | {t.block_title} | {t.error[:80]}') for t in traces[-5:]]\"\n2. Read the failing block from .kiro/loop/control.md to understand what was attempted.\n3. Check the engine's retry count. If the engine has already escalated (status: escalated), STOP and report to user.\n4. If the engine marked it 'retrying', implement the targeted fix in the relevant file.\n5. After fixing, update the block status back to 'pending' in .kiro/loop/control.md.\n6. Re-run the engine: python -c \"from kiro_loop_engine import LoopEngine; e = LoopEngine(); e.process_cycle()\"\n\nDo NOT bypass the engine. The engine owns the retry count, rollback, and trace. You implement fixes; the engine verifies them.\n\nIf the output shows ALL CHECKS PASSED or engine completed successfully: Do nothing."
+  }
+}

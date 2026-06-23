@@ -1,0 +1,12 @@
+{
+  "name": "Task Complete — Engine State Sync",
+  "version": "2.0.0",
+  "description": "After a spec task completes, sync the result back to the engine's control file and advance to the next block.",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "TASK COMPLETION — ENGINE SYNC PROTOCOL:\n\nThe current spec task has been executed. Sync with the loop engine:\n\n1. Run: python -c \"from kiro_loop_engine import LoopEngine; e = LoopEngine(); traces = e.get_trace(); completed = [t for t in traces if t.status == 'completed']; print(f'Completed blocks: {len(completed)}'); [print(f'  - {t.block_title}') for t in completed[-5:]]\"\n2. Check .kiro/loop/control.md — if the corresponding block is already marked 'completed' by the engine, no action needed.\n3. If the engine hasn't processed this block yet (status still 'pending'), update it to 'pending' and trigger: python -c \"from kiro_loop_engine import LoopEngine; e = LoopEngine(); e.process_cycle()\"\n4. Update .kiro/specs/*/tasks.md checkbox to [x] if the engine confirms completion.\n5. Report engine stats: python -c \"from kiro_loop_engine import LoopEngine; e = LoopEngine(); s = e.get_memory_stats(); print(f'Engine: {s[\"total_blocks_processed\"]} blocks done, {s[\"total_retries\"]} retries, {s[\"total_rollbacks\"]} rollbacks')\"\n\nThe engine is the canonical source of truth for block completion status. Spec tasks.md mirrors it."
+  }
+}

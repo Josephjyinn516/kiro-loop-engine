@@ -104,8 +104,8 @@ class Parser:
         description_lines = lines[body_start : description_end + 1]
         description = "\n".join(description_lines).strip()
 
-        block_content = "\n".join(lines[start:end + 1])
-        file_paths = self._extract_file_paths(block_content)
+        # Extract file paths from description only (not metadata/verify lines)
+        file_paths = self._extract_file_paths(description)
 
         block_type = metadata.get("type", "")
         status = metadata.get("status", "pending")

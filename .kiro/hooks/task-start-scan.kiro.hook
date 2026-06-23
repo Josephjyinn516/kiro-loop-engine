@@ -1,0 +1,12 @@
+{
+  "name": "Task Start — Engine Context Load",
+  "version": "2.0.0",
+  "description": "Before a spec task executes, load the engine's current state and the active block context so the agent knows what the engine expects.",
+  "when": {
+    "type": "preTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "TASK START — ENGINE-AWARE PROTOCOL:\n\nBefore implementing this task, check the loop engine state:\n\n1. Run: python -c \"from kiro_loop_engine import LoopEngine; e = LoopEngine(); stats = e.get_memory_stats(); print(f'Cycles: {stats[\"total_cycles\"]}, Blocks: {stats[\"total_blocks_processed\"]}, Retries: {stats[\"total_retries\"]}')\"\n2. Read .kiro/loop/control.md to find any 'in-progress' or 'pending' blocks related to this task.\n3. If the engine has an active block for this work, align your implementation with the block's description and acceptance criteria.\n4. Scan the workspace for files referenced in the active block's file_paths.\n5. Check for existing functions/modules that overlap (per global-constraints.md §1: Reuse Before Creation).\n6. Implement the task, then let the engine verify via its verification loop.\n\nThe engine is the source of truth for what needs to be built and whether it passed."
+  }
+}

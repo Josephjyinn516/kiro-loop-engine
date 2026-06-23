@@ -1,0 +1,13 @@
+{
+  "name": "Intake Trigger — Parse to Control File",
+  "version": "2.0.0",
+  "description": "When a new file is created in raw_inputs/, parse it as a spec and write structured instruction blocks into the loop engine control file (.kiro/loop/control.md). The engine then orchestrates execution.",
+  "when": {
+    "type": "fileCreated",
+    "patterns": ["raw_inputs/*.html", "raw_inputs/*.md", "raw_inputs/*.txt", "raw_inputs/**"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "INTAKE TRIGGER — LOOP ENGINE ORCHESTRATED MODE.\n\nA new file has been added to raw_inputs/. Your job is to parse it and feed it into the loop engine's control file. Do NOT implement anything yourself — the engine orchestrates that.\n\nSteps:\n1. READ the new file completely.\n2. If it does NOT contain requirements/specs/brief, STOP.\n3. If it IS a valid spec input:\n   a. Ensure .kiro/loop/control.md exists. If not, run: python -c \"from kiro_loop_engine import LoopEngine; LoopEngine().setup()\"\n   b. Parse the input into discrete instruction blocks following this format and APPEND them to .kiro/loop/control.md:\n\n      ## <Task Title>\n\n      type: task\n      status: pending\n      priority: normal\n      verify: powershell -ExecutionPolicy Bypass -File .kiro/scripts/verify.ps1\n      accept: <acceptance criteria from the spec>\n\n      <Description of what to build, with explicit file paths>\n\n   c. Break the spec into multiple blocks if it has multiple deliverables.\n   d. Include file paths explicitly in descriptions (e.g., templates/receipt.html, tests/test_receipt.py).\n   e. After writing all blocks, run: python -c \"from kiro_loop_engine import LoopEngine; e = LoopEngine(); e.process_cycle()\"\n   f. Report the engine's trace output: python -c \"from kiro_loop_engine import LoopEngine; e = LoopEngine(); [print(t.status, t.block_title) for t in e.get_trace()]\"\n\n4. The engine handles: execution routing, verification, retry (max 3), rollback, and tracing.\n5. Do NOT bypass the engine. Do NOT implement features directly. Feed the engine.\n\nPRESERVE the original input file untouched."
+  }
+}
