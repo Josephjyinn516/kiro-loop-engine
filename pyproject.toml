@@ -13,12 +13,6 @@ authors = [
     { name = "CRM Data Agent Team" },
 ]
 keywords = ["kiro", "loop-engine", "automation", "ide-plugin"]
-
-[project.urls]
-Homepage = "https://github.com/YOUR_USERNAME/kiro-loop-engine"
-Repository = "https://github.com/YOUR_USERNAME/kiro-loop-engine"
-Issues = "https://github.com/YOUR_USERNAME/kiro-loop-engine/issues"
-
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -27,6 +21,11 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Josephjyinn516/kiro-loop-engine"
+Repository = "https://github.com/Josephjyinn516/kiro-loop-engine"
+Issues = "https://github.com/Josephjyinn516/kiro-loop-engine/issues"
 
 [project.optional-dependencies]
 dev = [
